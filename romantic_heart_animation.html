@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ckb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>هەدیەکە بکەرەوە</title>
+    
+    <!-- OpenGraph Meta Tags for sharing links -->
+    <meta property="og:title" content="هەدیەکە بکەرەوە">
+    <meta property="og:description" content="دیارییەکی تایبەت و ڕۆمانسی بۆ تۆ">
+    <meta property="og:type" content="website">
+    
+    <!-- Google Fonts for Romantic Cursive Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Dancing+Script:wght@700&family=Noto+Naskh+Arabic:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #2e081d 0%, #17030e 50%, #0a0106 100%);
+            font-family: 'Great Vibes', 'Dancing Script', cursive;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .content-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .name-title {
+            font-family: 'Great Vibes', cursive;
+            font-size: 5rem;
+            color: #ffffff;
+            text-shadow: 
+                0 0 10px #ff3366,
+                0 0 20px #ff3366,
+                0 0 40px #ff0055,
+                0 0 80px #ff0055,
+                0 0 120px #ff0055;
+            animation: pulseGlow 2.5s infinite ease-in-out;
+            letter-spacing: 2px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .sub-message {
+            font-family: 'Noto Naskh Arabic', sans-serif;
+            font-size: 1.2rem;
+            color: rgba(255, 200, 220, 0.85);
+            margin-top: 15px;
+            text-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+            animation: fadeInOut 3s infinite ease-in-out;
+            direction: rtl;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.95;
+                text-shadow: 
+                    0 0 10px #ff3366,
+                    0 0 20px #ff3366,
+                    0 0 40px #ff0055,
+                    0 0 80px #ff0055;
+            }
+            50% {
+                transform: scale(1.08);
+                opacity: 1;
+                text-shadow: 
+                    0 0 15px #ff6699,
+                    0 0 30px #ff3366,
+                    0 0 60px #ff0055,
+                    0 0 100px #ff0055,
+                    0 0 140px #ff0055;
+            }
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Music toggle button */
+        .music-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 20;
+            background: rgba(255, 51, 102, 0.2);
+            border: 1px solid rgba(255, 102, 153, 0.5);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            font-family: 'Noto Naskh Arabic', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            direction: rtl;
+        }
+
+        .music-btn:hover {
+            background: rgba(255, 51, 102, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(255, 0, 85, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            .name-title {
+                font-size: 3.8rem;
+            }
+            .sub-message {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="content-container">
+        <h1 class="name-title">Sheua</h1>
+        <p class="sub-message">تۆی تاقانەی دڵم ❤️</p>
+    </div>
+
+    <button class="music-btn" id="musicBtn" onclick="toggleAudio()">
+        <span>🎵 دەنگ چالاک بکە</span>
+    </button>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initHeartPoints();
+        });
+
+        // Audio synth using Web Audio API for soft romantic music background
+        let audioCtx = null;
+        let isPlaying = false;
+        let bgInterval = null;
+
+        function toggleAudio() {
+            const btn = document.getElementById('musicBtn');
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            if (!isPlaying) {
+                audioCtx.resume();
+                isPlaying = true;
+                btn.innerHTML = '<span>🎶 دەنگ بپچڕێنە</span>';
+                playRomanticMelody();
+            } else {
+                isPlaying = false;
+                btn.innerHTML = '<span>🎵 دەنگ چالاک بکە</span>';
+                if (bgInterval) clearInterval(bgInterval);
+            }
+        }
+
+        function playRomanticMelody() {
+            const notes = [261.63, 329.63, 392.00, 493.88, 523.25, 659.25, 587.33]; // C, E, G, B, C, E, D
+            let noteIdx = 0;
+
+            bgInterval = setInterval(() => {
+                if (!isPlaying) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(notes[noteIdx % notes.length], audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.08, audioCtx.currentTime + 0.3);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 2.5);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 2.6);
+
+                noteIdx++;
+            }, 600);
+        }
+
+        // Heart curve formula: x = 16 sin^3(t), y = 13 cos(t) - 5 cos(2t) - 2 cos(3t) - cos(4t)
+        function heartPoint(t, scale = 16) {
+            const x = 16 * Math.pow(Math.sin(t), 3);
+            const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+            return {
+                x: x * scale,
+                y: y * scale
+            };
+        }
+
+        // Particles forming the glowing big heart
+        const heartParticles = [];
+        const heartParticleCount = 450;
+        let heartScale = 1;
+
+        function initHeartPoints() {
+            heartParticles.length = 0;
+            const baseScale = Math.min(width, height) / 45;
+
+            for (let i = 0; i < heartParticleCount; i++) {
+                const step = (Math.PI * 2 * i) / heartParticleCount;
+                const point = heartPoint(step, baseScale);
+                
+                // Add minor random noise for continuous organic glow effect
+                heartParticles.push({
+                    baseX: point.x,
+                    baseY: point.y,
+                    x: point.x,
+                    y: point.y,
+                    size: Math.random() * 2.5 + 1.2,
+                    speed: Math.random() * 0.05 + 0.02,
+                    offset: Math.random() * Math.PI * 2,
+                    color: `hsl(${330 + Math.random() * 30}, 100%, ${60 + Math.random() * 30}%)`,
+                    alpha: Math.random() * 0.7 + 0.3
+                });
+            }
+        }
+
+        initHeartPoints();
+
+        // Floating particles (bokeh & sparkles)
+        const sparkles = [];
+        const sparkleCount = 90;
+
+        for (let i = 0; i < sparkleCount; i++) {
+            sparkles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                radius: Math.random() * 3 + 0.5,
+                vx: (Math.random() - 0.5) * 0.4,
+                vy: -Math.random() * 0.8 - 0.2,
+                alpha: Math.random() * 0.8 + 0.2,
+                pulse: Math.random() * 0.03 + 0.01,
+                color: Math.random() > 0.3 ? '#ff6699' : '#ffffff'
+            });
+        }
+
+        // Falling/floating rose petals
+        const petals = [];
+        const petalCount = 35;
+
+        for (let i = 0; i < petalCount; i++) {
+            petals.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                size: Math.random() * 12 + 8,
+                speedY: Math.random() * 0.8 + 0.4,
+                speedX: Math.random() * 0.6 - 0.3,
+                angle: Math.random() * Math.PI * 2,
+                angularSpeed: (Math.random() - 0.5) * 0.02,
+                opacity: Math.random() * 0.6 + 0.4
+            });
+        }
+
+        let tick = 0;
+
+        function render() {
+            tick += 0.025;
+            ctx.clearRect(0, 0, width, height);
+
+            // Ambient background glow pulse
+            const cx = width / 2;
+            const cy = height / 2;
+
+            const bgGlow = ctx.createRadialGradient(cx, cy, 10, cx, cy, Math.max(width, height) * 0.6);
+            bgGlow.addColorStop(0, 'rgba(120, 10, 55, 0.35)');
+            bgGlow.addColorStop(0.5, 'rgba(60, 5, 28, 0.2)');
+            bgGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = bgGlow;
+            ctx.fillRect(0, 0, width, height);
+
+            // Smooth Pulsating Heart Heartbeat Logic
+            const pulseScale = 1 + Math.sin(tick * 2.5) * 0.05 + Math.pow(Math.sin(tick * 5), 2) * 0.03;
+
+            // Draw Central Heart Particles
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            for (let i = 0; i < heartParticles.length; i++) {
+                const p = heartParticles[i];
+                p.offset += p.speed;
+
+                // Micro wobble for organic shimmer effect
+                const wobble = Math.sin(p.offset) * 3;
+                const curX = (p.baseX + wobble) * pulseScale;
+                const curY = (p.baseY + wobble) * pulseScale;
+
+                ctx.beginPath();
+                ctx.arc(curX, curY, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = '#ff0055';
+                ctx.globalAlpha = p.alpha;
+                ctx.fill();
+
+                // Connect nearby heart particles with faint aesthetic glow lines
+                if (i % 3 === 0 && i < heartParticles.length - 2) {
+                    const p2 = heartParticles[i + 2];
+                    ctx.beginPath();
+                    ctx.moveTo(curX, curY);
+                    ctx.lineTo(p2.baseX * pulseScale, p2.baseY * pulseScale);
+                    ctx.strokeStyle = 'rgba(255, 102, 153, 0.15)';
+                    ctx.lineWidth = 0.8;
+                    ctx.stroke();
+                }
+            }
+            ctx.restore();
+
+            // Draw Sparkles / Bokeh dots
+            for (let i = 0; i < sparkles.length; i++) {
+                const s = sparkles[i];
+                s.x += s.vx;
+                s.y += s.vy;
+                s.alpha += Math.sin(tick * 3 + i) * s.pulse;
+
+                if (s.y < -10) s.y = height + 10;
+                if (s.x < -10) s.x = width + 10;
+                if (s.x > width + 10) s.x = -10;
+
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+                ctx.fillStyle = s.color;
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#ff66aa';
+                ctx.globalAlpha = Math.max(0.1, Math.min(1, s.alpha));
+                ctx.fill();
+            }
+
+            // Draw Animated Rose Petals
+            for (let i = 0; i < petals.length; i++) {
+                const pt = petals[i];
+                pt.y += pt.speedY;
+                pt.x += Math.sin(tick + i) * 0.5 + pt.speedX;
+                pt.angle += pt.angularSpeed;
+
+                if (pt.y > height + 20) {
+                    pt.y = -20;
+                    pt.x = Math.random() * width;
+                }
+
+                ctx.save();
+                ctx.translate(pt.x, pt.y);
+                ctx.rotate(pt.angle);
+                ctx.globalAlpha = pt.opacity;
+
+                // Draw petal geometry
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(-pt.size / 2, -pt.size / 2, -pt.size, pt.size / 3, 0, pt.size);
+                ctx.bezierCurveTo(pt.size, pt.size / 3, pt.size / 2, -pt.size / 2, 0, 0);
+                
+                const petalGrad = ctx.createLinearGradient(0, 0, 0, pt.size);
+                petalGrad.addColorStop(0, '#ff3366');
+                petalGrad.addColorStop(1, '#990026');
+
+                ctx.fillStyle = petalGrad;
+                ctx.shadowBlur = 4;
+                ctx.shadowColor = '#66001a';
+                ctx.fill();
+                ctx.restore();
+            }
+
+            requestAnimationFrame(render);
+        }
+
+        // Start animation loop on window load
+        window.onload = function() {
+            render();
+        };
+    </script>
+</body>
+</html>
